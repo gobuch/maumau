@@ -10,12 +10,12 @@ func TestGameEvents(t *testing.T) {
 
 	g := newGame()
 	cardGame := CardGame()
-	g.Event(addCardGameToStack(cardGame))
-	g.Event(addPlayer(newPlayer("Max")))
-	g.Event(addPlayer(newPlayer("Maja")))
-	g.Event(serveGame())
-	g.State() // State can be called more then once
-	g.State()
+	g.event(addCardGameToStack(cardGame))
+	g.event(addPlayer(newPlayer("Max")))
+	g.event(addPlayer(newPlayer("Maja")))
+	g.event(serveGame())
+	g.state() // State can be called more then once
+	g.state()
 	if g.Stack.len() == 0 {
 		t.Error("stack is empty some cards should be added to the game")
 	}
@@ -33,16 +33,16 @@ func TestGameEvents(t *testing.T) {
 
 	// Player 0 has to take the top card of the stack
 	topCard := g.Stack.peek()
-	g.Event(takeCardFromStack(g.Players[0]))
-	g.State()
+	g.event(takeCardFromStack(g.Players[0]))
+	g.state()
 	pTopCard := g.Players[0].Cards.peek()
 	if !reflect.DeepEqual(topCard, pTopCard) {
 		t.Error("popCardFromStack does not serve the right card")
 	}
 	// Player 0 plays one card to the heap
 	pFirstCard := g.Players[0].Cards.Cards[0]
-	g.Event(playCardToHeap(g.Players[0], 0))
-	g.State()
+	g.event(playCardToHeap(g.Players[0], 0))
+	g.state()
 	hTopCard := g.Heap.pop()
 	g.Heap.push(hTopCard)
 	if pFirstCard.ID == "" {
