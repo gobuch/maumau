@@ -1,0 +1,257 @@
+<html>
+
+<head>
+    <title>maumau</title>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            background-color: beige;
+            color: black;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .card {
+            float: left;
+            border-radius: 15%;
+            background-color: white;
+            width: 2em;
+            height: 1.5em;
+            text-align: center;
+            margin: 0.4em 0.15em;
+            padding: 0.6em 0.1em;
+            border: 0.15em solid white;
+            font-size: 2.0em;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0.14em 0.14em 0.2em gray;
+        }
+
+        .card:hover {
+            box-shadow: 1px 1px 0.2em gray;
+        }
+
+        .c1 {
+            background-color: red;
+        }
+
+        .c2 {
+            background-color: blue;
+        }
+
+        .c3 {
+            background-color: green;
+        }
+
+        .c4 {
+            background-color: goldenrod;
+        }
+
+        .wish {
+            background-image: repeating-linear-gradient(red, blue 22px, green 15px, goldenrod 44px);
+        }
+
+        .back {
+            background-color: thistle;
+        }
+
+        .player {
+            display: block;
+            box-shadow: 0.4em 0.4em 0.8em gray;
+            border: 0.5em solid tan;
+            margin: 1.5em 0;
+            background-color: rgb(226, 195, 182);
+        }
+
+        .active {
+            background-color: rgb(201, 219, 183);
+        }
+
+        .game {
+            display: block;
+        }
+
+        .player:after,
+        .game:after {
+            content: "";
+            display: block;
+            clear: left;
+        }
+
+        .playesr:after {
+            content: "";
+            display: block;
+            clear: left;
+        }
+
+        .button {
+            display: block;
+            float: left;
+            font-size: 1.3em;
+            font-weight: bold;
+            width: 8em;
+            text-align: center;
+            background-color: dimgrey;
+            margin: 0.5em;
+            padding: 0.2em;
+            color: white;
+            border: 0.3em solid white;
+            border-radius: 5%;
+            box-shadow: 0.2em 0.2em 0.4em gray;
+        }
+
+        .button:hover {
+            box-shadow: 0.01em 0.01em 0.2em gray;
+            color: black;
+            background-color: lightgray;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>maumau</h1>
+    <div id="game">
+        <div class="player opponent" :class="state.opponent.class">
+            <div class="cards">
+                <div class="card" :class="card.color" :id="card.id" v-for="card in state.opponent.cards.cards"></div>
+            </div>
+        </div>
+        <div class="game">
+            <div id="stack">
+                <div class="card back" v-on:click="takeCard(state.player.id)"></div>
+            </div>
+            <div id="stack">
+                <div class="card" :class="state.heap_head.color">
+                    {{ state.heap_head.label }}
+                </div>
+            </div>
+        </div>
+        <div id="me" class="player" :class="state.player.class">
+            <div class="cards">
+                <div class="card" :class="card.color" :id="card.id" v-for="card in state.player.cards.cards"
+                    v-on:click="cardClick(card.id)">{{ card.label }}</div>
+            </div>
+            <br>
+            <div class="button" v-on:click="next(state.player.id)">weiter</div>
+        </div>
+        <div id="controller">
+            <div class="button" v-on:click="newGame">Neues Spiel</div>
+            <div class="button" v-on:click="undo">Zur&uuml;ck</div>
+            <div class="button" v-on:click="redo">Vor</div>
+        </div>
+    </div>
+    <script>
+
+        var app = new Vue({
+            el: '#game',
+            data: function () {
+                return {
+                    "state": {
+                        "player": {
+                            "id": "",
+                            "cards": {
+                                "cards": []
+                            },
+                            "class": ""
+                        },
+                        "opponent": {
+                            "cards": {
+                                "cards": []
+                            },
+                            "class": ""
+                        },
+                        "heap_head": {
+                            "color": "back",
+                            "value": "",
+                            "label": ""
+                        }
+                    }
+                }
+            },
+            methods: {
+                next: (event) => {
+                    id = event;
+                    axios.get('/next?id=' + id)
+                        .then(function (response) {
+                            console.log(response);
+                        })
+                        .catch(function (error) {
+                            // handle error
+                            console.log(error);
+                        })
+                    console.log(event);
+                },
+                cardClick: (event) => {
+                    id = event;
+                    axios.get('/playcard?id=' + id)
+                        .then(function (response) {
+                            console.log(response);
+                        })
+                        .catch(function (error) {
+                            // handle error
+                            console.log(error);
+                        })
+                    console.log(event);
+                },
+                takeCard: (event) => {
+                    id = event;
+                    axios.get('/takecard?id=' + id)
+                        .then(function (response) {
+                            console.log(response);
+                        })
+                        .catch(function (error) {
+                            // handle error
+                            console.log(error);
+                        })
+                },
+                newGame: (event) => {
+                    id = event;
+                    axios.get('/newgame')
+                        .then(function (response) {
+                            console.log(response);
+                        })
+                        .catch(function (error) {
+                            // handle error
+                            console.log(error);
+                        })
+                },
+                undo: (event) => {
+                    id = event;
+                    axios.get('/undo')
+                        .then(function (response) {
+                            console.log(response);
+                        })
+                        .catch(function (error) {
+                            // handle error
+                            console.log(error);
+                        })
+                },
+                redo: (event) => {
+                    id = event;
+                    axios.get('/redo')
+                        .then(function (response) {
+                            console.log(response);
+                        })
+                        .catch(function (error) {
+                            // handle error
+                            console.log(error);
+                        })
+                }
+            }
+        })
+        var u = new URL(location.href);
+        var id = u.searchParams.get("id");
+        socket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/ws/" + id);
+        socket.onclose = function () {
+            alert("Connection has been closed.");
+        }
+        socket.onmessage = function (events) {
+            var d = JSON.parse(events.data);
+            console.log(d);
+            app.state = d;
+        }
+    </script>
+</body>
+
+</html>
