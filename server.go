@@ -15,6 +15,7 @@ type server struct {
 	clients []*client
 	msg     chan []byte
 	server  *http.Server
+	debug   bool
 }
 
 func newServer() *server {
@@ -28,6 +29,7 @@ func newServer() *server {
 			WriteTimeout:   10 * time.Second,
 			MaxHeaderBytes: 1 << 20,
 		},
+		debug: *flagDebug,
 	}
 }
 
@@ -37,8 +39,10 @@ func (s *server) run() error {
 	return s.server.ListenAndServe()
 }
 
+// sendState ranges over all clients creates the hand
+// for each player, encodes it to JSON and sends the
+// result into the message channel
 func (s *server) sendState() {
-
 	for _, c := range s.clients {
 		buf := &bytes.Buffer{}
 		enc := json.NewEncoder(buf)

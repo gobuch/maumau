@@ -22,19 +22,23 @@ const (
 	StatusPlayerNotFound = "250"
 )
 
+// routes is used to define the handlers for the server
 func (s *server) routes() {
-	s.router.HandleFunc("/gamestate", s.handleGameState())
-	s.router.HandleFunc("/data", s.handleData())
-	s.router.HandleFunc("/start", s.handleStart())
+	// websocket handler
+	s.router.HandleFunc("/ws/", s.handleWS())
+
+	s.router.HandleFunc("/game", s.handleGame())
+
 	s.router.HandleFunc("/playcard", s.handlePlayCard())
 	s.router.HandleFunc("/takecard", s.handleTakeCard())
 	s.router.HandleFunc("/next", s.handleNextPlayer())
 	s.router.HandleFunc("/newgame", s.handleNewGame())
 	s.router.HandleFunc("/undo", s.handleUndo())
 	s.router.HandleFunc("/redo", s.handleRedo())
-	s.router.HandleFunc("/ws/", s.handleWS())
-	s.router.HandleFunc("/game", s.handleGame())
 	s.router.HandleFunc("/", s.handleLogin())
+	if s.debug {
+		s.router.HandleFunc("/gamestate", s.handleGameState())
+	}
 }
 
 func (s *server) handleWS() http.HandlerFunc {
@@ -86,6 +90,91 @@ func (s *server) handleWS() http.HandlerFunc {
 	}
 }
 
+func (s *server) handleGame() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "html/gametable.html")
+	}
+}
+
+// handlePlayCard is called via a normal get request. It expects
+// the id inside the url (bla.com/playcard?id=ab123)
+func (s *server) handlePlayCard() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, ok := s.handGetID(w, r)
+		if !ok {
+			return
+		}
+		for _, p := range s.game.Players {
+			i, ok := p.Cards.find(id)
+			if !ok {
+				continue
+			}
+			if !s.game.HeapHead.Check(p.Cards.Cards[i]) {
+				return
+			}
+			// check if player is active
+			if !p.active {
+				return
+			}
+			s.game.event(playCardToHeap(p, i))
+			w.WriteHeader(http.StatusOK)
+			io.WriteString(w, StatusCardPlayed)
+			s.sendState()
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+		io.WriteString(w, StatusCardNotFound)
+	}
+}
+
+func (s *server) handleTakeCard() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, ok := s.handGetID(w, r)
+		if !ok {
+			return
+		}
+		p, ok := s.game.player(id)
+		if !ok {
+			w.WriteHeader(http.StatusNotFound)
+			io.WriteString(w, StatusPlayerNotFound)
+			return
+		}
+		if s.game.Stack.len() == 0 {
+			oldCards := &CardStack{}
+			// move all cards from the heap to oldCards
+			for s.game.Heap.len() > 1 {
+				oldCards.push(s.game.Heap.pop())
+			}
+			oldCards.shuffle()
+			s.game.event(removeCardsFromHeap())
+			s.game.event(addCardGameToStack(oldCards))
+		}
+		s.game.event(takeCardFromStack(p))
+		s.sendState()
+	}
+}
+
+func (s *server) handleNextPlayer() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// check if there is an id in the url
+		id, ok := s.handGetID(w, r)
+		if !ok {
+			return
+		}
+		// check the player id
+		s.game.state()
+		p, ok := s.game.player(id)
+		if !ok {
+			return
+		}
+		// check if the player is active
+		if p.active {
+			s.game.event(setNextPlayer(p))
+		}
+		s.sendState()
+	}
+}
+
 func (s *server) handleNewGame() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s.game.Events = []Event{}
@@ -124,12 +213,6 @@ func (s *server) handleRedo() http.HandlerFunc {
 	}
 }
 
-func (s *server) handleGame() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "html/gametable.html")
-	}
-}
-
 func (s *server) handleLogin() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "html/login.html")
@@ -148,126 +231,15 @@ func (s *server) handleGameState() http.HandlerFunc {
 	}
 }
 
-func (s *server) handleStart() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cardGame := CardGame()
-		cardGame.shuffle()
-		s.game.event(addCardGameToStack(cardGame))
-		s.game.event(serveGame())
-	}
-}
-
+// handGetID is a helper function, which extracts the id from the http-request
 func (s *server) handGetID(w http.ResponseWriter, r *http.Request) (id string, ok bool) {
 	u := r.URL
 	q := u.Query()
 	ids, ok := q["id"]
 	if !ok || len(ids) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
-		io.WriteString(w, "No ID given")
+		io.WriteString(w, "No ID given")which
 		return "", false
 	}
 	return ids[0], true
-}
-
-func (s *server) handleData() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id, ok := s.handGetID(w, r)
-		if !ok {
-			return
-		}
-		//c, ok := s.getClient(id[0])
-		s.game.state()
-		p, ok := s.game.player(id)
-		if !ok {
-			w.WriteHeader(http.StatusBadRequest)
-			io.WriteString(w, "Wrong ID")
-			log.Println("wrongID:", id)
-			return
-		}
-		enc := json.NewEncoder(w)
-		enc.SetIndent("", "  ")
-		err := enc.Encode(p)
-		if err != nil {
-			log.Println("error handleData() encoding: ", err)
-		}
-	}
-}
-
-// handlePlayCard is called via a normal get request. It expects
-// the id inside the url (bla.com/playcard?id=ab123)
-func (s *server) handlePlayCard() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id, ok := s.handGetID(w, r)
-		if !ok {
-			return
-		}
-		for _, p := range s.game.Players {
-			i, ok := p.Cards.find(id)
-			if !ok {
-				continue
-			}
-			if !s.game.HeapHead.Check(p.Cards.Cards[i]) {
-				return
-			}
-			// check if player is active
-			if !p.active {
-				return
-			}
-			s.game.event(playCardToHeap(p, i))
-			w.WriteHeader(http.StatusOK)
-			io.WriteString(w, StatusCardPlayed)
-			s.sendState()
-			return
-		}
-		w.WriteHeader(http.StatusNotFound)
-		io.WriteString(w, StatusCardNotFound)
-	}
-}
-
-func (s *server) handleNextPlayer() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// check if there is an id in the url
-		id, ok := s.handGetID(w, r)
-		if !ok {
-			return
-		}
-		// check the player id
-		s.game.state()
-		p, ok := s.game.player(id)
-		if !ok {
-			return
-		}
-		// check if the player is active
-		if p.active {
-			s.game.event(setNextPlayer(p))
-		}
-		s.sendState()
-	}
-}
-
-func (s *server) handleTakeCard() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id, ok := s.handGetID(w, r)
-		if !ok {
-			return
-		}
-		p, ok := s.game.player(id)
-		if !ok {
-			w.WriteHeader(http.StatusNotFound)
-			io.WriteString(w, StatusPlayerNotFound)
-			return
-		}
-		if s.game.Stack.len() == 0 {
-			oldCards := &CardStack{}
-			// move all cards from the heap to oldCards
-			for s.game.Heap.len() > 1 {
-				oldCards.push(s.game.Heap.pop())
-			}
-			oldCards.shuffle()
-			s.game.event(removeCardsFromHeap())
-			s.game.event(addCardGameToStack(oldCards))
-		}
-		s.game.event(takeCardFromStack(p))
-		s.sendState()
-	}
 }

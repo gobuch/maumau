@@ -25,6 +25,7 @@ type PlayerState struct {
 	HeapHead Card   `json:"heap_head"`
 }
 
+// playerState generates the hand for each player.
 func (s *server) playerState(id string) (PlayerState, bool) {
 	ps := PlayerState{}
 	found := false
@@ -43,6 +44,7 @@ func (s *server) playerState(id string) (PlayerState, bool) {
 				ID:   "",
 				Name: p.Name,
 				Cards: &CardStack{
+					// make creates the slice with empty cards
 					Cards: make([]Card, len(p.Cards.Cards)),
 				},
 			}
