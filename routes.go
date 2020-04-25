@@ -238,7 +238,7 @@ func (s *server) handGetID(w http.ResponseWriter, r *http.Request) (id string, o
 	ids, ok := q["id"]
 	if !ok || len(ids) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
-		io.WriteString(w, "No ID given")which
+		io.WriteString(w, "No ID given")
 		return "", false
 	}
 	return ids[0], true

@@ -39,12 +39,13 @@ func (s *server) playerState(id string) (PlayerState, bool) {
 			}
 			found = true
 		default:
-			// Hide opponent cards and id
 			opponent := Player{
 				ID:   "",
 				Name: p.Name,
 				Cards: &CardStack{
 					// make creates the slice with empty cards
+					// because the player should not see or get
+					// any information about that cards
 					Cards: make([]Card, len(p.Cards.Cards)),
 				},
 			}

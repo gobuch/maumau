@@ -10,7 +10,7 @@ func addCardGameToStack(cs *CardStack) Event {
 	}
 }
 
-// addPlayer takes a Player and adds him/her to the game
+// addPlayer adds a player to the game
 func addPlayer(p *Player) Event {
 	return func(g *GameState) {
 		p.Cards = &CardStack{}
@@ -21,7 +21,7 @@ func addPlayer(p *Player) Event {
 	}
 }
 
-// setNextPlayer changes the active player
+// setNextPlayer change the active player
 func setNextPlayer(p *Player) Event {
 	return func(g *GameState) {
 		next, _ := g.nextPlayer(p.ID)
@@ -46,7 +46,7 @@ func serveGame() Event {
 	}
 }
 
-// takeCardFromStack lets a player take a card
+// takeCardFromStack the player takes a card
 func takeCardFromStack(p *Player) Event {
 	return func(g *GameState) {
 		p.Cards.push(g.Stack.pop())

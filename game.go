@@ -1,5 +1,9 @@
 package main
 
+// Event is a function, which takes a pointer to the game
+// When the game calculates the state all events are called
+type Event func(g *GameState)
+
 // Game defines the logic of the maumau game
 type Game struct {
 	GameState
@@ -29,8 +33,7 @@ func newGame() *Game {
 	}
 }
 
-// event takes an event and adds that to the game
-// to get a new state Init() has to be called
+// event adds the event e to the game
 func (g *Game) event(e Event) {
 	// every new event clears the redo slice
 	g.RedoEvents = []Event{}
@@ -55,19 +58,18 @@ func (g *Game) state() {
 }
 
 // player returns the player matching to the given ID.
-// when no ID is availiable a nil pointer is returned.
 func (g *GameState) player(id string) (*Player, bool) {
 	for _, p := range g.Players {
 		if id == p.ID {
 			return p, true
 		}
 	}
+	// if there is no player with id
 	return nil, false
 }
 
 // nextPlayer takes the current player ID and returns the
-// next player at the table. If there is no ID a nil pointer
-// is returned
+// next player at the table.
 func (g *GameState) nextPlayer(id string) (*Player, bool) {
 	found := -1
 	// index of the current player
@@ -77,6 +79,7 @@ func (g *GameState) nextPlayer(id string) (*Player, bool) {
 			break
 		}
 	}
+	// given id does not exist
 	if found == -1 {
 		return nil, false
 	}
@@ -89,12 +92,10 @@ func (g *GameState) nextPlayer(id string) (*Player, bool) {
 	return g.Players[next], true
 }
 
-// SetActivePlayer takes an ID to set the active player
+// SetActivePlayer sets the active player
 // all other players will set es not active.
-// if there is no ID, false ist returned
 func (g *GameState) setActivePlayer(id string) bool {
-	// first check if there is a player to the id
-	// if not nothing should be changed.
+	// first check if there is a player with the id
 	_, ok := g.player(id)
 	if !ok {
 		return false
@@ -108,7 +109,3 @@ func (g *GameState) setActivePlayer(id string) bool {
 	}
 	return true
 }
-
-// Event is a function, which takes a pointer to the game
-// When the game calculates the state all events are called
-type Event func(g *GameState)

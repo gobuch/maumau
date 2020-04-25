@@ -10,7 +10,6 @@ import (
 
 type server struct {
 	game    *Game
-	port    string
 	router  *http.ServeMux
 	clients []*client
 	msg     chan []byte
@@ -18,18 +17,16 @@ type server struct {
 	debug   bool
 }
 
-func newServer() *server {
+func newServer(addr string) *server {
 	return &server{
 		game:   newGame(),
-		port:   *flagPort,
 		router: http.NewServeMux(),
 		server: &http.Server{
-			Addr:           *flagPort,
-			ReadTimeout:    10 * time.Second,
-			WriteTimeout:   10 * time.Second,
+			Addr:           addr,
+			ReadTimeout:    3 * time.Second,
+			WriteTimeout:   3 * time.Second,
 			MaxHeaderBytes: 1 << 20,
 		},
-		debug: *flagDebug,
 	}
 }
 
