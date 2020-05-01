@@ -177,7 +177,7 @@ func (s *server) handleNextPlayer() http.HandlerFunc {
 
 func (s *server) handleNewGame() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s.game.Events = []Event{}
+		s.game.events = []event{}
 		players := s.game.Players
 		s.game.Players = []*Player{}
 		for _, player := range players {
@@ -194,11 +194,11 @@ func (s *server) handleNewGame() http.HandlerFunc {
 
 func (s *server) handleUndo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if len(s.game.Events) > 0 {
-			if len(s.game.RedoEvents) == 0 {
-				s.game.RedoEvents = s.game.Events
+		if len(s.game.events) > 0 {
+			if len(s.game.redoEvents) == 0 {
+				s.game.redoEvents = s.game.events
 			}
-			s.game.Events = s.game.Events[:len(s.game.Events)-1]
+			s.game.events = s.game.events[:len(s.game.events)-1]
 			s.sendState()
 		}
 	}
@@ -206,8 +206,8 @@ func (s *server) handleUndo() http.HandlerFunc {
 
 func (s *server) handleRedo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if len(s.game.Events) < len(s.game.RedoEvents) {
-			s.game.Events = append(s.game.Events, s.game.RedoEvents[len(s.game.Events)])
+		if len(s.game.events) < len(s.game.redoEvents) {
+			s.game.events = append(s.game.events, s.game.redoEvents[len(s.game.events)])
 			s.sendState()
 		}
 	}

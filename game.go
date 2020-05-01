@@ -1,25 +1,25 @@
 package main
 
-// Event is a function, which takes a pointer to the game
+// event is a function, which takes a pointer to the game
 // When the game calculates the state all events are called
-type Event func(g *GameState)
+type event func(g *GameState)
 
 // Game defines the logic of the maumau game
 type Game struct {
 	GameState
-	Events     []Event `json:"-"`
-	RedoEvents []Event `json:"-"`
+	events     []event
+	redoEvents []event
 }
 
 // GameState includes all properties of the game, which are having
 // a state. The is just changed by an event.
 type GameState struct {
-	Stack        *CardStack `json:"stack,omitempty"`
-	Heap         *CardStack `json:"heap,omitempty"`
-	HeapHead     Card       `json:"heap_head,omitempty"`
-	Players      []*Player  `json:"players,omitempty"`
+	Stack        *CardStack `json:"stack"`
+	Heap         *CardStack `json:"heap"`
+	HeapHead     Card       `json:"heap_head"`
+	Players      []*Player  `json:"players"`
 	ActivePlayer int        `json:"active_player"`
-	NrCards      int        `json:"nr_cards,omitempty"`
+	NrCards      int        `json:"nr_cards"`
 }
 
 func newGame() *Game {
@@ -34,10 +34,10 @@ func newGame() *Game {
 }
 
 // event adds the event e to the game
-func (g *Game) event(e Event) {
+func (g *Game) event(e event) {
 	// every new event clears the redo slice
-	g.RedoEvents = []Event{}
-	g.Events = append(g.Events, e)
+	g.redoEvents = []event{}
+	g.events = append(g.events, e)
 }
 
 // init clears the internal state
@@ -51,7 +51,7 @@ func (g *Game) init() {
 // the Stack, Heap and the Players
 func (g *Game) state() {
 	g.init()
-	for _, e := range g.Events {
+	for _, e := range g.events {
 		e(&g.GameState)
 	}
 	g.HeapHead = g.Heap.peek()
