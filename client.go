@@ -18,7 +18,7 @@ type client struct {
 // websocke connection. That method runs as long the message-channel is open
 // and the connection exists. That methos blocks the program-flow, so it
 // must run inside a own goroutine.
-func (c *client) write() {
+func (c client) write() {
 	defer c.socket.Close()
 	for msg := range c.messages {
 		err := c.socket.WriteMessage(websocket.TextMessage, msg)

@@ -26,9 +26,7 @@ const (
 func (s *server) routes() {
 	// websocket handler
 	s.router.HandleFunc("/ws/", s.handleWS())
-
 	s.router.HandleFunc("/game", s.handleGame())
-
 	s.router.HandleFunc("/playcard", s.handlePlayCard())
 	s.router.HandleFunc("/takecard", s.handleTakeCard())
 	s.router.HandleFunc("/next", s.handleNextPlayer())
@@ -71,7 +69,7 @@ func (s *server) handleWS() http.HandlerFunc {
 		// allow more client instances
 		// when there is a reload at the browser the id of the
 		// url is used to identify the user.
-		c := &client{
+		c := client{
 			socket:   conn,
 			messages: make(chan []byte, 256), // message buffer 256 bytes
 			playerID: id,

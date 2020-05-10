@@ -11,8 +11,7 @@ import (
 type server struct {
 	game    *Game
 	router  *http.ServeMux
-	clients []*client
-	msg     chan []byte
+	clients []client
 	server  *http.Server
 	debug   bool
 }
