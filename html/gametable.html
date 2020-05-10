@@ -129,8 +129,12 @@
         </div>
         <div id="me" class="player" :class="state.player.class">
             <div class="cards">
-                <div class="card" :class="card.color" :id="card.id" v-for="card in state.player.cards.cards"
-                    v-on:click="cardClick(card.id)">{{ card.label }}</div>
+                <div class="card" 
+                    :class="card.color" :id="card.id" 
+                    v-for="card in state.player.cards.cards"
+                    v-on:click="cardClick(card.id)">
+                        {{ card.label }}
+                </div>
             </div>
             <br>
             <div class="button" v-on:click="next(state.player.id)">weiter</div>
