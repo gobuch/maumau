@@ -15,8 +15,8 @@ type client struct {
 }
 
 // write receives messages over a channel and write that message into the
-// websocke connection. That method runs as long the message-channel is open
-// and the connection exists. That methos blocks the program-flow, so it
+// websocket connection. That method runs as long the message-channel is open
+// and the connection exists. That methods blocks the program-flow, so it
 // must run inside a own goroutine.
 func (c client) write() {
 	defer c.socket.Close()

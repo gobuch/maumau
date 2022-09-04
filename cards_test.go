@@ -57,10 +57,10 @@ func TestCard_Check(t *testing.T) {
 
 func TestCardStackMethods(t *testing.T) {
 	cards := []Card{
-		Card{ID: "1"},
-		Card{ID: "2"},
-		Card{ID: "3"},
-		Card{ID: "4"},
+		{ID: "1"},
+		{ID: "2"},
+		{ID: "3"},
+		{ID: "4"},
 	}
 	// Add all the cards to the stack
 	cs := CardStack{}
